@@ -134,6 +134,15 @@ def get_news():
             'fallback': True
         })
 
+@app.route('/api/news')
+def api_news():
+    if request.args.get('sample') == 'true':
+        return jsonify(SAMPLE_NEWS)
+    
+    topic = request.args.get('topic', 'general')
+    news_data = fetch_live_news(topic)
+    return jsonify(news_data)
+
 if __name__ == '__main__':
     os.makedirs('static', exist_ok=True)
     os.makedirs('templates', exist_ok=True)

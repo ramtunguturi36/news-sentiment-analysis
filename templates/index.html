@@ -262,8 +262,32 @@
                 sampleBtn.disabled = show;
             }
 
+            function showError(message) {
+                const errorContainer = document.getElementById('error-container') || createErrorContainer();
+                errorContainer.textContent = message;
+                errorContainer.style.display = 'block';
+                setTimeout(() => {
+                    errorContainer.style.display = 'none';
+                }, 5000);
+            }
 
-            
+            function createErrorContainer() {
+                const container = document.createElement('div');
+                container.id = 'error-container';
+                container.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background-color: var(--danger);
+                    color: white;
+                    padding: 15px;
+                    border-radius: 5px;
+                    display: none;
+                    z-index: 1000;
+                `;
+                document.body.appendChild(container);
+                return container;
+            }
 
             // Function to analyze text
             async function analyzeText(text) {
@@ -296,22 +320,25 @@
 
             // Function to fetch news
             async function fetchNews(topic = '', useSample = false) {
-                showLoading(true);
-                newsContainer.innerHTML = '';
-                errorContainer.style.display = 'none';
-
                 try {
-                    const params = new URLSearchParams();
-                    if (topic) params.append('topic', topic);
-                    if (useSample) params.append('sample', 'true');
+                    const loadingElement = document.getElementById('loading');
+                    const newsContainer = document.getElementById('news-container');
+                    
+                    loadingElement.style.display = 'block';
+                    newsContainer.innerHTML = '';
 
-                    const response = await fetch(`/api/news?${params.toString()}`);
-                    const data = await response.json();
-
+                    const url = `/api/news${useSample ? '?sample=true' : topic ? `?topic=${encodeURIComponent(topic)}` : ''}`;
+                    const response = await fetch(url);
+                    
                     if (!response.ok) {
-                        throw new Error(data.error || 'Failed to fetch news');
+                        throw new Error(`HTTP error! status: ${response.status}`);
                     }
-
+                    
+                    const data = await response.json();
+                    
+                    if (!data || !Array.isArray(data)) {
+                        throw new Error('Invalid data format received from server');
+                    }
 
                     // Process each article
                     for (const article of data.articles) {
@@ -334,15 +361,10 @@
                     }
 
                 } catch (error) {
+                    showError(`Error fetching news: ${error.message}`);
                     console.error('Error:', error);
-                    showError(error.message || 'An error occurred while fetching news');
-                    
-                    // If there was an error and we weren't using sample data, try loading sample data
-                    if (!useSample) {
-                        fetchNews('', true);
-                    }
                 } finally {
-                    showLoading(false);
+                    document.getElementById('loading').style.display = 'none';
                 }
             }
 
