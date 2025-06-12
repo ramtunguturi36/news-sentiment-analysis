@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI News Summarizer & Sentiment Analyzer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4a6fa5;
+            --primary-light: #6d8fc9;
+            --secondary: #f8f9fa;
+            --text: #333;
+            --text-light: #6c757d;
+            --border: #dee2e6;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background-color: #f5f7fa;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        h1 {
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .search-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(74, 111, 165, 0.2);
+        }
+
+        button {
+            padding: 12px 20px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: var(--primary-light);
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .news-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .news-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .news-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .news-content {
+            padding: 20px;
+        }
+
+        .news-title {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        .news-summary {
+            color: var(--text);
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .sentiment {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+
+        .sentiment.positive {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .sentiment.neutral {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .sentiment.negative {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .news-link {
+            display: inline-block;
+            margin-top: 15px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .news-link:hover {
+            text-decoration: underline;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-size: 18px;
+            color: var(--text-light);
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: var(--primary);
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border-left: 4px solid #f5c6cb;
+        }
+
+        .info-box {
+            background-color: #e2f0fd;
+            color: #004085;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border-left: 4px solid #b8daff;
+        }
+
+        @media (max-width: 768px) {
+            .search-container {
+                flex-direction: column;
+            }
+            
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>AI News Summarizer & Sentiment Analyzer</h1>
+            <p>Get the latest news summarized and analyzed for sentiment</p>
+        </header>
+
+        <div class="search-container">
+            <input type="text" id="topicInput" placeholder="Enter a topic (e.g., AI, Technology, Politics)">
+            <button id="searchBtn">Search News</button>
+            <button id="sampleBtn">Use Sample News</button>
+        </div>
+
+        <div id="infoBox" class="info-box" {% if has_api_key %}style="display: none;"{% endif %}>
+            <strong>🔑 API Key Required:</strong> To use live news, please add your NewsAPI key to the .env file as <code>NEWS_API_KEY=your_api_key_here</code>
+        </div>
+
+        <div id="errorContainer" style="display: none;"></div>
+
+        <div id="loadingIndicator" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Processing your request...</p>
+        </div>
+
+        <div id="newsContainer" class="news-container">
+            <!-- News cards will be inserted here -->
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const topicInput = document.getElementById('topicInput');
+            const searchBtn = document.getElementById('searchBtn');
+            const sampleBtn = document.getElementById('sampleBtn');
+            const newsContainer = document.getElementById('newsContainer');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const errorContainer = document.getElementById('errorContainer');
+
+            // Function to show loading state
+            function showLoading(show) {
+                loadingIndicator.style.display = show ? 'block' : 'none';
+                searchBtn.disabled = show;
+                sampleBtn.disabled = show;
+            }
+
+
+            // Function to show error message
+            function showError(message) {
+                errorContainer.innerHTML = `
+                    <div class="error-message">
+                        <strong>Error:</strong> ${message}
+                    </div>
+                `;
+                errorContainer.style.display = 'block';
+                
+                // Hide error after 5 seconds
+                setTimeout(() => {
+                    errorContainer.style.display = 'none';
+                }, 5000);
+            }
+
+
+            // Function to analyze text
+            async function analyzeText(text) {
+                try {
+                    const response = await fetch('/api/analyze', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ text })
+                    });
+
+                    const data = await response.json();
+                    
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Failed to analyze text');
+                    }
+
+                    return data;
+                } catch (error) {
+                    console.error('Analysis error:', error);
+                    return {
+                        summary: 'Summary not available',
+                        sentiment: 'Unknown',
+                        sentimentClass: 'neutral'
+                    };
+                }
+            }
+
+
+            // Function to fetch news
+            async function fetchNews(topic = '', useSample = false) {
+                showLoading(true);
+                newsContainer.innerHTML = '';
+                errorContainer.style.display = 'none';
+
+                try {
+                    const params = new URLSearchParams();
+                    if (topic) params.append('topic', topic);
+                    if (useSample) params.append('sample', 'true');
+
+                    const response = await fetch(`/api/news?${params.toString()}`);
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Failed to fetch news');
+                    }
+
+
+                    // Process each article
+                    for (const article of data.articles) {
+                        const analysis = await analyzeText(article.description);
+                        
+                        const articleElement = document.createElement('div');
+                        articleElement.className = 'news-card';
+                        articleElement.innerHTML = `
+                            <div class="news-content">
+                                <h3 class="news-title">${article.title}</h3>
+                                <p class="news-summary">${analysis.summary}</p>
+                                <div class="sentiment ${analysis.sentimentClass}">
+                                    ${analysis.sentiment}
+                                </div>
+                                <a href="${article.url}" target="_blank" class="news-link">Read Full Article →</a>
+                            </div>
+                        `;
+                        
+                        newsContainer.appendChild(articleElement);
+                    }
+
+                } catch (error) {
+                    console.error('Error:', error);
+                    showError(error.message || 'An error occurred while fetching news');
+                    
+                    // If there was an error and we weren't using sample data, try loading sample data
+                    if (!useSample) {
+                        fetchNews('', true);
+                    }
+                } finally {
+                    showLoading(false);
+                }
+            }
+
+
+            // Event listeners
+            searchBtn.addEventListener('click', () => {
+                const topic = topicInput.value.trim();
+                if (!topic) {
+                    showError('Please enter a topic to search');
+                    return;
+                }
+                fetchNews(topic);
+            });
+
+            sampleBtn.addEventListener('click', () => {
+                fetchNews('', true);
+            });
+
+            // Load sample data on first visit
+            fetchNews('', true);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+[
+    {
+        "title": "AI Breakthrough in Healthcare",
+        "description": "A new AI system has shown promising results in detecting early signs of cancer with 95% accuracy. Researchers are optimistic about its potential to save lives through early detection.",
+        "url": "https://example.com/ai-healthcare"
+    },
+    {
+        "title": "AI Job Market Impact",
+        "description": "A recent study suggests that while AI will create new job opportunities, it could also lead to significant job displacement in certain sectors. Experts recommend upskilling programs to prepare the workforce.",
+        "url": "https://example.com/ai-jobs"
+    },
+    {
+        "title": "AI Ethics Framework Released",
+        "description": "The International AI Ethics Council has released a comprehensive framework for ethical AI development and deployment. The guidelines cover areas such as bias, transparency, and accountability.",
+        "url": "https://example.com/ai-ethics"
+    }
+]
