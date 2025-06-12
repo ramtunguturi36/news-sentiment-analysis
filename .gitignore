@@ -18,6 +18,19 @@ var/
 wheels/
 *.egg-info/
 .installed.cfg
+
+# Vercel
+.vercel/
+.vercel_build_output/
+.vercel_deployment
+.vercel_project
+.vercel_build_output/
+.vercel_builds/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
 *.egg
 
 # Virtual Environment
