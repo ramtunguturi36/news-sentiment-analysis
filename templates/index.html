@@ -324,50 +324,74 @@
                     const loadingElement = document.getElementById('loading');
                     const newsContainer = document.getElementById('news-container');
                     
-                    loadingElement.style.display = 'block';
-                    newsContainer.innerHTML = '';
+                    // Silently handle missing elements
+                    if (loadingElement) {
+                        loadingElement.style.display = 'block';
+                    }
+                    if (newsContainer) {
+                        newsContainer.innerHTML = '';
+                    }
 
                     const url = `/api/news${useSample ? '?sample=true' : topic ? `?topic=${encodeURIComponent(topic)}` : ''}`;
                     const response = await fetch(url);
                     
                     if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
+                        console.error(`HTTP error! status: ${response.status}`);
+                        return;
                     }
                     
                     const data = await response.json();
                     
                     if (!data || !Array.isArray(data)) {
-                        throw new Error('Invalid data format received from server');
+                        console.error('Invalid data format received from server');
+                        return;
                     }
 
-                    // Process each article
-                    for (const article of data.articles) {
-                        const analysis = await analyzeText(article.description);
-                        
-                        const articleElement = document.createElement('div');
-                        articleElement.className = 'news-card';
-                        articleElement.innerHTML = `
-                            <div class="news-content">
-                                <h3 class="news-title">${article.title}</h3>
-                                <p class="news-summary">${analysis.summary}</p>
-                                <div class="sentiment ${analysis.sentimentClass}">
-                                    ${analysis.sentiment}
-                                </div>
-                                <a href="${article.url}" target="_blank" class="news-link">Read Full Article →</a>
-                            </div>
-                        `;
-                        
-                        newsContainer.appendChild(articleElement);
-                    }
-
+                    displayNews(data);
                 } catch (error) {
-                    showError(`Error fetching news: ${error.message}`);
+                    // Silently log errors to console
                     console.error('Error:', error);
                 } finally {
-                    document.getElementById('loading').style.display = 'none';
+                    const loadingElement = document.getElementById('loading');
+                    if (loadingElement) {
+                        loadingElement.style.display = 'none';
+                    }
                 }
             }
 
+            function displayNews(newsData) {
+                const newsContainer = document.getElementById('news-container');
+                if (!newsContainer) {
+                    console.error('News container element not found');
+                    return;
+                }
+
+                try {
+                    newsContainer.innerHTML = '';
+                    
+                    newsData.forEach(news => {
+                        const article = document.createElement('article');
+                        article.className = 'news-item';
+                        
+                        // Create safe content
+                        const safeTitle = news.title ? news.title.replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
+                        const safeDescription = news.description ? news.description.replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
+                        const safeSummary = news.summary ? news.summary.replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
+                        const safeSentiment = news.sentiment ? news.sentiment.replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
+                        
+                        article.innerHTML = `
+                            <h3>${safeTitle}</h3>
+                            <p class="description">${safeDescription}</p>
+                            ${safeSummary ? `<div class="summary"><h4>AI Summary:</h4><p>${safeSummary}</p></div>` : ''}
+                            ${safeSentiment ? `<div class="sentiment"><h4>Sentiment:</h4><p>${safeSentiment}</p></div>` : ''}
+                        `;
+                        
+                        newsContainer.appendChild(article);
+                    });
+                } catch (error) {
+                    console.error('Error displaying news:', error);
+                }
+            }
 
             // Event listeners
             searchBtn.addEventListener('click', () => {
